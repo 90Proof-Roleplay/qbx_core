@@ -332,29 +332,30 @@ exports('ToggleOptin', ToggleOptin)
 ---@return boolean
 ---@return string? playerMessage
 function IsPlayerBanned(source)
-    local plicense = GetPlayerIdentifierByType(source --[[@as string]], 'license2')
-    local result = storage.fetchBan({
-        license = plicense
-    })
+    local license = GetPlayerIdentifierByType(source --[[@as string]], 'license')
+    local license2 = GetPlayerIdentifierByType(source --[[@as string]], 'license2')
+    local result = license2 and storage.fetchBan({ license = license2 })
 
     if not result then
-        plicense = GetPlayerIdentifierByType(source --[[@as string]], 'license')
-        result = storage.fetchBan({
-            license = plicense
-        })
+        result = storage.fetchBan({ license = license })
     end
 
     if not result then return false end
+
     if os.time() < result.expire then
         local timeTable = os.date('*t', tonumber(result.expire))
+
         return true, ('You have been banned from the server:\n%s\nYour ban expires in %s/%s/%s %s:%s\n'):format(result.reason, timeTable.day, timeTable.month, timeTable.year, timeTable.hour, timeTable.min)
     else
         CreateThread(function()
-            storage.deleteBan({
-                license = plicense
-            })
+            if license2 then
+                storage.deleteBan({ license = license2 })
+            end
+
+            storage.deleteBan({ license = license })
         end)
     end
+
     return false
 end
 
@@ -435,7 +436,51 @@ exports('ExploitBan', ExploitBan)
 ---@return boolean
 function HasPrimaryGroup(source, filter)
     local playerData = QBX.Players[source].PlayerData
-    return HasPlayerGotGroup(filter, playerData)
+    return HasPlayerGotGroup(filter, playerData, true)
 end
 
 exports('HasPrimaryGroup', HasPrimaryGroup)
+
+---@param source Source
+---@param filter string | string[] | table<string, number>
+---@return boolean
+function HasGroup(source, filter)
+    local playerData = QBX.Players[source].PlayerData
+    return HasPlayerGotGroup(filter, playerData)
+end
+
+exports('HasGroup', HasGroup)
+
+---@param source Source
+---@return table<string, integer>
+function GetGroups(source)
+    local playerData = QBX.Players[source].PlayerData
+    return GetPlayerGroups(playerData)
+end
+
+exports('GetGroups', GetGroups)
+
+---@return PlayerData[]
+local function getPlayersData()
+    local playersData = {}
+    for _, player in pairs(QBX.Players) do
+        playersData[#playersData + 1] = player.PlayerData
+    end
+    return playersData
+end
+
+exports('GetPlayersData', getPlayersData)
+
+local function isGradeBoss(group, grade)
+    local groupData = GetJob(group) or GetGang(group)
+    if not groupData then return end
+    return groupData[grade].IsBoss
+end
+
+exports('IsGradeBoss', isGradeBoss)
+
+local function getGroupMembers(group, type)
+    return storage.fetchGroupMembers(group, type)
+end
+
+exports('GetGroupMembers', getGroupMembers)
