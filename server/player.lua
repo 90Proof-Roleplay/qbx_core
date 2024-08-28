@@ -489,6 +489,8 @@ function CheckPlayerData(source, playerData)
         id = true,
         driver = true,
         weapon = false,
+        hunting = false,
+        business = false,
     }
     playerData.metadata.inside = playerData.metadata.inside or {
         house = nil,
