@@ -650,9 +650,11 @@ function CreatePlayer(playerData, Offline)
     ---@param onDuty boolean
     function self.Functions.SetJobDuty(onDuty)
         self.PlayerData.job.onduty = not not onDuty -- Make sure the value is a boolean if nil is sent
-        TriggerEvent('QBCore:Server:SetDuty', self.PlayerData.source, self.PlayerData.job.onduty)
-        TriggerClientEvent('QBCore:Client:SetDuty', self.PlayerData.source, self.PlayerData.job.onduty)
-        self.Functions.UpdatePlayerData()
+        if not self.Offline then
+            TriggerEvent('QBCore:Server:SetDuty', self.PlayerData.source, self.PlayerData.job.onduty)
+            TriggerClientEvent('QBCore:Client:SetDuty', self.PlayerData.source, self.PlayerData.job.onduty)
+            self.Functions.UpdatePlayerData()
+        end
     end
 
     ---@param key string
@@ -667,11 +669,15 @@ function CreatePlayer(playerData, Offline)
     ---@param val any
     function self.Functions.SetMetaData(meta, val)
         if not meta or type(meta) ~= 'string' then return end
-        if (meta == 'hunger' or meta == 'thirst' or meta == 'stress') and self.PlayerData.source then
+
+        if (meta == 'hunger' or meta == 'thirst' or meta == 'stress') then
             val = lib.math.clamp(val, 0, 100)
-            Player(self.PlayerData.source).state:set(meta, val, true)
+            if not self.Offline then
+                Player(self.PlayerData.source).state:set(meta, val, true)
+            end
         end
-        if (meta == 'dead' or meta == 'inlaststand') and self.PlayerData.source then
+
+        if (meta == 'dead' or meta == 'inlaststand') and not self.Offline then
             Player(self.PlayerData.source).state:set('canUseWeapons', not val, true)
         end
 
@@ -681,8 +687,10 @@ function CreatePlayer(playerData, Offline)
         if meta == 'inlaststand' or meta == 'isdead' then
             self.Functions.Save()
         end
-        TriggerClientEvent('qbx_core:client:onSetMetaData', self.PlayerData.source, meta, oldVal, val)
-        TriggerEvent('qbx_core:server:onSetMetaData', meta,  oldVal, val, self.PlayerData.source)
+        if not self.Offline then
+            TriggerClientEvent('qbx_core:client:onSetMetaData', self.PlayerData.source, meta, oldVal, val)
+            TriggerEvent('qbx_core:server:onSetMetaData', meta,  oldVal, val, self.PlayerData.source)
+        end
     end
 
     ---@param meta string
@@ -841,6 +849,7 @@ function CreatePlayer(playerData, Offline)
     ---@param slot? number
     ---@return boolean success
     function self.Functions.AddItem(item, amount, slot, metadata)
+        assert(not self.Offline, 'unsupported for offline players')
         return exports.ox_inventory:AddItem(self.PlayerData.source, item, amount, metadata, slot)
     end
 
@@ -850,6 +859,7 @@ function CreatePlayer(playerData, Offline)
     ---@param slot? number
     ---@return boolean success
     function self.Functions.RemoveItem(item, amount, slot)
+        assert(not self.Offline, 'unsupported for offline players')
         return exports.ox_inventory:RemoveItem(self.PlayerData.source, item, amount, nil, slot)
     end
 
@@ -857,6 +867,7 @@ function CreatePlayer(playerData, Offline)
     ---@param slot number
     ---@return any table
     function self.Functions.GetItemBySlot(slot)
+        assert(not self.Offline, 'unsupported for offline players')
         return qbItemCompat(exports.ox_inventory:GetSlot(self.PlayerData.source, slot))
     end
 
@@ -864,6 +875,7 @@ function CreatePlayer(playerData, Offline)
     ---@param itemName string
     ---@return any table
     function self.Functions.GetItemByName(itemName)
+        assert(not self.Offline, 'unsupported for offline players')
         return qbItemCompat(exports.ox_inventory:GetSlotWithItem(self.PlayerData.source, itemName))
     end
 
@@ -871,11 +883,13 @@ function CreatePlayer(playerData, Offline)
     ---@param itemName string
     ---@return any table
     function self.Functions.GetItemsByName(itemName)
+        assert(not self.Offline, 'unsupported for offline players')
         return qbItemCompat(exports.ox_inventory:GetSlotsWithItem(self.PlayerData.source, itemName))
     end
 
     ---@deprecated use ox_inventory exports directly
     function self.Functions.ClearInventory()
+        assert(not self.Offline, 'unsupported for offline players')
         return exports.ox_inventory:ClearInventory(self.PlayerData.source)
     end
 
@@ -900,7 +914,7 @@ function CreatePlayer(playerData, Offline)
 
     ---@deprecated call exports.qbx_core:Logout(source)
     function self.Functions.Logout()
-        if self.Offline then return end -- Unsupported for Offline Players
+        assert(not self.Offline, 'unsupported for offline players')
         Logout(self.PlayerData.source)
     end
 
