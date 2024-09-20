@@ -419,6 +419,7 @@ exports('RemovePlayerFromGang', removePlayerFromGang)
 ---@return Player player
 function CheckPlayerData(source, playerData)
     playerData = playerData or {}
+    ---@diagnostic disable-next-line: param-type-mismatch
     local playerState = Player(source)?.state
     local Offline = true
     if source then
@@ -722,7 +723,7 @@ function CreatePlayer(playerData, Offline)
         end
         local oxmoneytype = moneytype == 'cash' and 'money' or moneytype
         if accountsAsItems[oxmoneytype] then
-            exports.ox_inventory:SetItem(self.PlayerData.source, moneytype, self.PlayerData.money[moneytype])
+            exports.ox_inventory:SetItem(self.PlayerData.source, oxmoneytype, self.PlayerData.money[moneytype])
         end
     end
 
@@ -842,6 +843,12 @@ function CreatePlayer(playerData, Offline)
         return item
     end
 
+    ---@param item string
+    ---@return string
+    local function oxItemCompat(item)
+        return item == 'cash' and 'money' or item
+    end
+
     ---@deprecated use ox_inventory exports directly
     ---@param item string
     ---@param amount number
@@ -850,7 +857,7 @@ function CreatePlayer(playerData, Offline)
     ---@return boolean success
     function self.Functions.AddItem(item, amount, slot, metadata)
         assert(not self.Offline, 'unsupported for offline players')
-        return exports.ox_inventory:AddItem(self.PlayerData.source, item, amount, metadata, slot)
+        return exports.ox_inventory:AddItem(self.PlayerData.source, oxItemCompat(item), amount, metadata, slot)
     end
 
     ---@deprecated use ox_inventory exports directly
@@ -860,7 +867,7 @@ function CreatePlayer(playerData, Offline)
     ---@return boolean success
     function self.Functions.RemoveItem(item, amount, slot)
         assert(not self.Offline, 'unsupported for offline players')
-        return exports.ox_inventory:RemoveItem(self.PlayerData.source, item, amount, nil, slot)
+        return exports.ox_inventory:RemoveItem(self.PlayerData.source, oxItemCompat(item), amount, nil, slot)
     end
 
     ---@deprecated use ox_inventory exports directly
@@ -876,7 +883,7 @@ function CreatePlayer(playerData, Offline)
     ---@return any table
     function self.Functions.GetItemByName(itemName)
         assert(not self.Offline, 'unsupported for offline players')
-        return qbItemCompat(exports.ox_inventory:GetSlotWithItem(self.PlayerData.source, itemName))
+        return qbItemCompat(exports.ox_inventory:GetSlotWithItem(self.PlayerData.source, oxItemCompat(itemName)))
     end
 
     ---@deprecated use ox_inventory exports directly
@@ -884,7 +891,7 @@ function CreatePlayer(playerData, Offline)
     ---@return any table
     function self.Functions.GetItemsByName(itemName)
         assert(not self.Offline, 'unsupported for offline players')
-        return qbItemCompat(exports.ox_inventory:GetSlotsWithItem(self.PlayerData.source, itemName))
+        return qbItemCompat(exports.ox_inventory:GetSlotsWithItem(self.PlayerData.source, oxItemCompat(itemName)))
     end
 
     ---@deprecated use ox_inventory exports directly
