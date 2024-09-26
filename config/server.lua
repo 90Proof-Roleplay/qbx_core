@@ -63,6 +63,7 @@ return {
         {'properties', 'owner'},
         {'bank_accounts_new', 'id'},
         {'playerskins', 'citizenid'},
+        {'player_mails', 'citizenid'},
         {'player_outfits', 'citizenid'},
         {'player_vehicles', 'citizenid'},
         {'player_groups', 'citizenid'},
